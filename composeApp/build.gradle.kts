@@ -9,6 +9,11 @@ plugins {
 }
 
 kotlin {
+    // Compile with a JDK 17 toolchain (auto-provisioned by Gradle if none is installed),
+    // so builds don't depend on the ambient JDK — a JRE-only PATH would otherwise fail
+    // Android's compileDebugJavaWithJavac.
+    jvmToolchain(17)
+
     @Suppress("DEPRECATION")
     androidTarget {
         compilations.all {
