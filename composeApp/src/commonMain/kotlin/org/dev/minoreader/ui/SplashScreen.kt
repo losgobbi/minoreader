@@ -1,7 +1,10 @@
 package org.dev.minoreader.ui
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -14,8 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -30,23 +32,30 @@ import androidx.compose.ui.unit.dp
 
 private val SplashBackground = Color(0xFF2C7A7B)
 
-/** How long the RSS mark takes to assemble (dot → inner wave → outer wave). */
-private const val RSS_ANIM_MILLIS = 1100
+/** Time for the RSS mark to assemble (dot → inner wave → outer wave); it then reverses, looping. */
+private const val RSS_ANIM_MILLIS = 1400
 
-/** Splash screen: the cartoon-newspaper logo with an animated RSS mark (cross-platform). */
+/** Splash screen: the cartoon-newspaper logo with a looping, self-assembling RSS mark. */
 @Composable
 fun SplashScreen() {
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        progress.animateTo(1f, tween(durationMillis = RSS_ANIM_MILLIS, easing = LinearOutSlowInEasing))
-    }
+    val transition = rememberInfiniteTransition(label = "rss")
+    // 0→1 assembles the mark, then reverses 1→0 to dissolve it, looping (appear ↔ disappear).
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = RSS_ANIM_MILLIS, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "rss-progress",
+    )
 
     Box(
         modifier = Modifier.fillMaxSize().background(SplashBackground),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            NewspaperWithRss(newspaperSize = 132.dp, progress = progress.value)
+            NewspaperWithRss(newspaperSize = 132.dp, progress = progress)
             Spacer(Modifier.height(20.dp))
             Text(
                 text = "minoreader",
@@ -64,10 +73,10 @@ fun SplashScreen() {
     }
 }
 
-/** The newspaper with a white RSS mark floating just above its top-right corner. */
+/** The newspaper with a white RSS mark floating above (and clear of) its top-right corner. */
 @Composable
 private fun NewspaperWithRss(newspaperSize: Dp, progress: Float) {
-    Box(modifier = Modifier.size(width = newspaperSize * 1.26f, height = newspaperSize * 1.30f)) {
+    Box(modifier = Modifier.size(width = newspaperSize * 1.42f, height = newspaperSize * 1.44f)) {
         NewspaperLogo(
             size = newspaperSize,
             modifier = Modifier.align(Alignment.BottomStart),
@@ -83,7 +92,8 @@ private fun NewspaperWithRss(newspaperSize: Dp, progress: Float) {
 
 /**
  * The RSS "broadcast" mark: a dot with two quarter-circle waves emanating up-right.
- * [progress] 0→1 assembles it: the dot fades/pops in, then each wave sweeps into place.
+ * [progress] 0→1 assembles it: the dot pops in, then each wave sweeps into place (and,
+ * driven in reverse, dissolves back out).
  */
 @Composable
 private fun RssMark(progress: Float, modifier: Modifier = Modifier) {
@@ -92,7 +102,6 @@ private fun RssMark(progress: Float, modifier: Modifier = Modifier) {
         val origin = Offset(s * 0.30f, s * 0.72f) // dot center (bottom-left of the mark)
         val stroke = s * 0.11f
 
-        // dot: pops in over the first third
         val dot = window(progress, 0f, 0.30f)
         if (dot > 0f) {
             drawCircle(
@@ -101,7 +110,6 @@ private fun RssMark(progress: Float, modifier: Modifier = Modifier) {
                 center = origin,
             )
         }
-        // inner then outer wave sweep in
         drawWave(origin, radius = s * 0.30f, stroke = stroke, frac = window(progress, 0.28f, 0.62f))
         drawWave(origin, radius = s * 0.52f, stroke = stroke, frac = window(progress, 0.58f, 0.96f))
     }
