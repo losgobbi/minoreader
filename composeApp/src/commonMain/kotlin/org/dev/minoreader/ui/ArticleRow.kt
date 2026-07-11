@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import org.dev.minoreader.data.ArticleListItem
+import org.dev.minoreader.util.formatDate
 
 /**
  * A single article row: one-line title + subtitle (source · colored category),
@@ -62,20 +63,32 @@ fun ArticleRow(
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyLarge,
             )
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                        append(item.feedTitle)
-                        append("  ·  ")
-                    }
-                    withStyle(SpanStyle(color = catColor, fontWeight = FontWeight.Medium)) {
-                        append(item.category)
-                    }
-                },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.labelSmall,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                            append(item.feedTitle)
+                            append("  ·  ")
+                        }
+                        withStyle(SpanStyle(color = catColor, fontWeight = FontWeight.Medium)) {
+                            append(item.category)
+                        }
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                formatDate(item.publishedAt)?.let { date ->
+                    Text(
+                        text = date,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
         }
         IconButton(onClick = onToggleFavorite) {
             Icon(
