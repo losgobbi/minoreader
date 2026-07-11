@@ -9,10 +9,12 @@
 #               applies the Android plugin, so every Gradle task needs it to configure.
 #
 # Optional variables:
-#   SKIP_BUILD=1        -> don't build; reuse whatever is in build/compose/binaries
-#   GRADLE_ARGS="..."   -> extra Gradle args (default: --no-daemon --max-workers=1)
-#   XDG_DATA_HOME=...    -> install root (default: ~/.local/share)
-#   MINOREADER_BIN=...   -> where to create the terminal symlink (default: ~/.local/bin)
+#   SKIP_BUILD=1         -> don't build; reuse whatever is in build/compose/binaries
+#   GRADLE_ARGS="..."    -> extra Gradle args (default: --no-daemon --max-workers=1)
+#   XDG_DATA_HOME=...     -> install root (default: ~/.local/share)
+#   MINOREADER_BIN=...    -> where to create the terminal symlink (default: ~/.local/bin)
+#   MINOREADER_WMCLASS=.. -> force the .desktop StartupWMClass (skip WM_CLASS auto-detection)
+#   SKIP_WMCLASS_DETECT=1 -> don't briefly launch the app to detect WM_CLASS; use "minoreader"
 #
 set -euo pipefail
 
@@ -38,6 +40,36 @@ find_jdk_with_jlink() {
   for c in /usr/lib/jvm/*/bin/jlink "$HOME"/toolcache/jdk*/bin/jlink "$HOME"/.sdkman/candidates/java/*/bin/jlink; do
     [ -x "$c" ] && { dirname "$(dirname "$c")"; return 0; }
   done
+  return 1
+}
+
+# Detect the running window's WM_CLASS so GNOME matches the open window to this .desktop
+# entry (otherwise a second, generic "gear" icon appears in the dock on launch). AWT derives
+# WM_CLASS from the Java main class, so we can't reliably guess it — we briefly launch the app
+# and read it with xprop. Best-effort: needs an X session + xprop; falls back to "minoreader".
+detect_wmclass() {
+  [ -n "${DISPLAY:-}" ] || return 1
+  command -v xprop >/dev/null 2>&1 || return 1
+
+  "$INSTALL_DIR/bin/$APP_ID" >/dev/null 2>&1 &
+  local pid=$!
+  local raw="" res_class="" i
+  for i in $(seq 1 40); do
+    sleep 0.5
+    kill -0 "$pid" 2>/dev/null || break   # app died early
+    raw="$(xprop -name "$APP_ID" WM_CLASS 2>/dev/null | sed -n 's/.*WM_CLASS(STRING) = //p')"
+    [ -n "$raw" ] && break
+  done
+
+  kill "$pid" 2>/dev/null || true
+  pkill -f "$INSTALL_DIR/bin/$APP_ID" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+
+  # raw looks like: "minoreader", "org-dev-minoreader-MainKt"  -> take res_class (2nd token),
+  # else the single token. GNOME matches StartupWMClass against res_name or res_class.
+  res_class="$(printf '%s' "$raw" | sed -n 's/.*,[[:space:]]*"\([^"]*\)".*/\1/p')"
+  [ -n "$res_class" ] || res_class="$(printf '%s' "$raw" | sed -n 's/^[[:space:]]*"\([^"]*\)".*/\1/p')"
+  [ -n "$res_class" ] && { printf '%s\n' "$res_class"; return 0; }
   return 1
 }
 
@@ -74,6 +106,20 @@ echo "==> Installing icon ..."
 mkdir -p "$ICON_DIR"
 cp "$PROJECT_DIR/composeApp/src/desktopMain/resources/$APP_ID.svg" "$ICON_DIR/$APP_ID.svg"
 
+echo "==> Resolving WM_CLASS (to avoid a second 'gear' icon in the dock on launch) ..."
+if [ -n "${MINOREADER_WMCLASS:-}" ]; then
+  WMCLASS="$MINOREADER_WMCLASS"
+  echo "    using MINOREADER_WMCLASS=$WMCLASS"
+elif [ "${SKIP_WMCLASS_DETECT:-0}" = "1" ]; then
+  WMCLASS="$APP_ID"
+  echo "    detection skipped; using '$WMCLASS'"
+elif WMCLASS="$(detect_wmclass)"; then
+  echo "    detected WM_CLASS: $WMCLASS"
+else
+  WMCLASS="$APP_ID"
+  echo "    could not detect (no X/xprop?); using '$WMCLASS' — override with MINOREADER_WMCLASS=... if the gear icon persists"
+fi
+
 echo "==> Creating .desktop entry ..."
 mkdir -p "$(dirname "$DESKTOP_FILE")"
 cat > "$DESKTOP_FILE" <<EOF
@@ -88,7 +134,7 @@ Icon=$ICON_DIR/$APP_ID.svg
 Terminal=false
 Categories=Network;News;
 StartupNotify=true
-StartupWMClass=$APP_ID
+StartupWMClass=$WMCLASS
 EOF
 chmod +x "$DESKTOP_FILE"
 
