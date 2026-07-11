@@ -56,7 +56,7 @@ sealed interface Screen {
     data class Detail(val articleId: Long) : Screen
 }
 
-private const val SPLASH_MILLIS = 1300L
+private const val SPLASH_MILLIS = 2100L
 
 @Composable
 fun App() {
