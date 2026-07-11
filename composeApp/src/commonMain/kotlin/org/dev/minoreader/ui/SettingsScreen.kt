@@ -9,6 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -16,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,12 +29,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.dev.minoreader.db.Feed
 
 @Composable
 fun SettingsScreen(vm: MainViewModel) {
     val feeds by vm.feeds.collectAsState()
     var url by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
+    var editing by remember { mutableStateOf<Feed?>(null) }
 
     Column(
         modifier = Modifier
@@ -92,11 +97,25 @@ fun SettingsScreen(vm: MainViewModel) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                IconButton(onClick = { editing = feed }) {
+                    Icon(Icons.Filled.Edit, contentDescription = "Edit feed")
+                }
                 IconButton(onClick = { vm.deleteFeed(feed.id) }) {
                     Icon(Icons.Filled.Delete, contentDescription = "Remove feed")
                 }
             }
             HorizontalDivider()
+        }
+
+        editing?.let { feed ->
+            EditFeedDialog(
+                feed = feed,
+                onDismiss = { editing = null },
+                onSave = { newUrl, newTitle, newCategory ->
+                    vm.updateFeed(feed.id, newUrl, newTitle, newCategory)
+                    editing = null
+                },
+            )
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
@@ -109,4 +128,54 @@ fun SettingsScreen(vm: MainViewModel) {
             modifier = Modifier.padding(top = 8.dp),
         )
     }
+}
+
+@Composable
+private fun EditFeedDialog(
+    feed: Feed,
+    onDismiss: () -> Unit,
+    onSave: (url: String, title: String, category: String) -> Unit,
+) {
+    var url by remember(feed.id) { mutableStateOf(feed.url) }
+    var title by remember(feed.id) { mutableStateOf(feed.title) }
+    var category by remember(feed.id) { mutableStateOf(feed.category) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit feed") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = { category = it },
+                    label = { Text("Category") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text("RSS/Atom URL") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(url, title, category) },
+                enabled = url.isNotBlank(),
+            ) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }

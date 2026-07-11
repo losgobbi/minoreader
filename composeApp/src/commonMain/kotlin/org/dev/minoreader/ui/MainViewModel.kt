@@ -102,6 +102,25 @@ class MainViewModel(
         }
     }
 
+    fun updateFeed(id: Long, url: String, title: String, category: String) {
+        val cleanUrl = url.trim()
+        if (cleanUrl.isBlank()) return
+        scope.launch {
+            val result = runCatching {
+                feedRepo.updateFeed(
+                    id = id,
+                    url = cleanUrl,
+                    title = title.trim().ifBlank { cleanUrl },
+                    category = category.trim().ifBlank { "General" },
+                )
+            }
+            _status.value = result.fold(
+                onSuccess = { "Feed updated" },
+                onFailure = { "Failed to update: ${it.message ?: "unknown"}" },
+            )
+        }
+    }
+
     fun deleteFeed(id: Long) {
         scope.launch { feedRepo.deleteFeed(id) }
     }

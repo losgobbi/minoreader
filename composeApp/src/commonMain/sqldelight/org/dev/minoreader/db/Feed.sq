@@ -17,6 +17,9 @@ UPDATE Feed SET lastFetchedAt = ?, title = ? WHERE id = ?;
 updateFeedCategory:
 UPDATE Feed SET category = ? WHERE id = ?;
 
+updateFeed:
+UPDATE Feed SET url = ?, title = ?, category = ? WHERE id = ?;
+
 deleteFeed:
 DELETE FROM Feed WHERE id = ?;
 

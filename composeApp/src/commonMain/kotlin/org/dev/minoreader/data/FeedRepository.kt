@@ -25,6 +25,12 @@ class FeedRepository(db: MinoDb) {
         q.updateFeedCategory(category, id)
     }
 
+    /** Edits a feed's url/title/category. Throws if the new url collides with another feed. */
+    suspend fun updateFeed(id: Long, url: String, title: String, category: String) =
+        withContext(Dispatchers.Default) {
+            q.updateFeed(url = url, title = title, category = category, id = id)
+        }
+
     suspend fun markFetched(id: Long, title: String, ts: Long) = withContext(Dispatchers.Default) {
         q.updateFeedFetched(ts, title, id)
     }
