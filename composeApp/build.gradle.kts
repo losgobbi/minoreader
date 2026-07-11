@@ -66,8 +66,22 @@ kotlin {
             implementation(libs.sqldelight.sqlite.driver)
         }
 
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.core)
+        }
+
         val desktopTest by getting
         desktopTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.kotlinx.coroutines.core)
+        }
+
+        // Android unit tests run on the local JVM (testDebugUnitTest) and reuse commonTest,
+        // so the shared data/RSS/extractor coverage matches the Linux desktop run.
+        val androidUnitTest by getting
+        androidUnitTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.sqldelight.sqlite.driver)
             implementation(libs.kotlinx.coroutines.core)

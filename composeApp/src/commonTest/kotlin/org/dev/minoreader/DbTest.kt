@@ -1,27 +1,17 @@
 package org.dev.minoreader
 
-import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.dev.minoreader.data.ArticleRepository
 import org.dev.minoreader.data.FeedRepository
-import org.dev.minoreader.db.MinoDb
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DbTest {
 
-    private fun newDb(): MinoDb {
-        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-        MinoDb.Schema.create(driver)
-        driver.execute(null, "PRAGMA foreign_keys=ON;", 0)
-        return MinoDb(driver)
-    }
-
     @Test
-    fun feedAndArticleRoundtrip() = runBlocking {
-        val db = newDb()
+    fun feedAndArticleRoundtrip() = runTestBlocking {
+        val db = newInMemoryDb()
         val feeds = FeedRepository(db)
         val articles = ArticleRepository(db)
 

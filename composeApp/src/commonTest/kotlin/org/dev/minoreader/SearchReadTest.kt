@@ -3,14 +3,13 @@ package org.dev.minoreader
 import org.dev.minoreader.data.ArticleRepository
 import org.dev.minoreader.data.FeedRepository
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SearchReadTest {
 
     @Test
-    fun readHistoryAndSearch() = runBlocking {
+    fun readHistoryAndSearch() = runTestBlocking {
         val db = newInMemoryDb()
         val feeds = FeedRepository(db)
         val articles = ArticleRepository(db)

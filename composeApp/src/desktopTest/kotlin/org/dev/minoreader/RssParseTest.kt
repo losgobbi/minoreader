@@ -4,15 +4,17 @@ import com.prof18.rssparser.RssParser
 import org.dev.minoreader.data.ArticleRepository
 import org.dev.minoreader.data.FeedRepository
 import org.dev.minoreader.rss.FeedService
-import org.dev.minoreader.util.parseFeedDate
-import org.dev.minoreader.util.stripHtml
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+/**
+ * Exercises the real RssParser XML integration + import/dedup. Desktop/JVM only: on Android,
+ * RssParser uses the framework's XmlPullParser, which is a non-functional stub under local
+ * unit tests (would need an instrumented/Robolectric runtime). The import/dedup, search, DB,
+ * extraction and date/HTML logic are covered cross-platform in commonTest.
+ */
 class RssParseTest {
 
     private val sampleRss = """
@@ -40,7 +42,7 @@ class RssParseTest {
     """.trimIndent()
 
     @Test
-    fun parseAndImport() = runBlocking {
+    fun parseAndImport() = runTestBlocking {
         val db = newInMemoryDb()
         val feeds = FeedRepository(db)
         val articles = ArticleRepository(db)
@@ -63,15 +65,5 @@ class RssParseTest {
         val a = articles.detail(unread.first { it.title == "Article A" }.id)!!
         assertEquals("Summary & test", a.excerpt, "excerpt without HTML/entities")
         assertTrue((a.publishedAt ?: 0L) > 0L, "RFC-822 pubDate parsed")
-    }
-
-    @Test
-    fun dateAndHtmlHelpers() {
-        assertTrue((parseFeedDate("Wed, 02 Oct 2024 13:00:00 GMT") ?: 0) > 0)
-        assertTrue((parseFeedDate("2024-10-02T13:00:00Z") ?: 0) > 0)
-        assertNull(parseFeedDate("garbage"))
-        assertNull(parseFeedDate(null))
-        assertEquals("a & b", stripHtml("<b>a</b> &amp; b"))
-        assertNull(stripHtml("   "))
     }
 }
