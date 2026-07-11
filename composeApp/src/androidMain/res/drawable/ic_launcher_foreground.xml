@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- back page (folded-newspaper depth) -->
+    <path
+        android:fillColor="#E7DDC6"
+        android:pathData="M34,32 H80 V80 H34 Z" />
+    <!-- newspaper front (white paper with cartoon outline) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#263238"
+        android:strokeWidth="2.5"
+        android:pathData="M28,28 H72 V78 H28 Z" />
+    <!-- masthead (newspaper name) -->
+    <path
+        android:fillColor="#263238"
+        android:pathData="M33,34 H67 V42 H33 Z" />
+    <!-- rule line -->
+    <path
+        android:fillColor="#263238"
+        android:pathData="M33,45 H67 V46.5 H33 Z" />
+    <!-- article photo/image -->
+    <path
+        android:fillColor="#E4572E"
+        android:strokeColor="#263238"
+        android:strokeWidth="1.2"
+        android:pathData="M33,50 H47 V63 H33 Z" />
+    <!-- text lines beside the photo -->
+    <path android:fillColor="#9AA0A6" android:pathData="M50,51 H67 V53 H50 Z" />
+    <path android:fillColor="#9AA0A6" android:pathData="M50,55 H67 V57 H50 Z" />
+    <path android:fillColor="#9AA0A6" android:pathData="M50,59 H67 V61 H50 Z" />
+    <!-- text lines (full width) -->
+    <path android:fillColor="#9AA0A6" android:pathData="M33,67 H67 V69 H33 Z" />
+    <path android:fillColor="#9AA0A6" android:pathData="M33,71 H67 V73 H33 Z" />
+    <path android:fillColor="#9AA0A6" android:pathData="M33,75 H58 V77 H33 Z" />
+</vector>

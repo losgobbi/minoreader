@@ -1,0 +1,30 @@
+CREATE TABLE Feed (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    faviconUrl TEXT,
+    lastFetchedAt INTEGER
+);
+
+insertFeed:
+INSERT OR IGNORE INTO Feed(url, title, category, faviconUrl, lastFetchedAt)
+VALUES (?, ?, ?, ?, ?);
+
+updateFeedFetched:
+UPDATE Feed SET lastFetchedAt = ?, title = ? WHERE id = ?;
+
+updateFeedCategory:
+UPDATE Feed SET category = ? WHERE id = ?;
+
+deleteFeed:
+DELETE FROM Feed WHERE id = ?;
+
+selectAllFeeds:
+SELECT * FROM Feed ORDER BY category, title;
+
+selectCategories:
+SELECT DISTINCT category FROM Feed ORDER BY category;
+
+selectFeedByUrl:
+SELECT * FROM Feed WHERE url = ?;
