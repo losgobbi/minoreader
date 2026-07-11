@@ -75,6 +75,11 @@ kotlin {
     }
 }
 
+// Single source of truth for the app version. In CI it's derived from the git tag
+// (-PappVersion=X.Y.Z from a v* tag); defaults to 1.0.0 for local/main builds.
+val appVersion = (findProperty("appVersion") as String?)?.takeIf { it.isNotBlank() } ?: "1.0.0"
+val appVersionCode = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
+
 android {
     namespace = "org.dev.minoreader"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -83,8 +88,8 @@ android {
         applicationId = "org.dev.minoreader"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersion
     }
 
     compileOptions {
@@ -113,7 +118,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.AppImage)
             packageName = "minoreader"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
             // JDK modules the minimized (jlink) runtime must include.
             // java.sql: SQLite (JDBC) driver; the rest come from suggestRuntimeModules.
             modules("java.instrument", "java.net.http", "java.sql", "jdk.unsupported")
